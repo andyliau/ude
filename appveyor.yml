@@ -1,0 +1,19 @@
+version: 1.0.{build}
+image: Visual Studio 2017
+configuration: Release
+platform: Any CPU
+environment:
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+nuget:
+  disable_publish_on_pr: true
+before_build:
+- dotnet --info
+- dotnet restore .\Ude.sln
+build:
+  project: .\Ude.sln
+  verbosity: minimal
+after_build:
+- dotnet pack .\src\Library\Ude.csproj --configuration Release
+artifacts:
+- path: '**\*.nupkg'
