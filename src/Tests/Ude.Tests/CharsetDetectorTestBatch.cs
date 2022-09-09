@@ -6,6 +6,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 using NUnit.Framework;
 
 using Ude;
@@ -82,6 +83,17 @@ namespace Ude.Tests
         }
         
         [Test()]
+        public void TestWin1252()
+        {
+            char nbsp = '\u00A0';
+            string text = "Very strange string:;%'?''" + nbsp;
+            var windows1252 = Encoding.GetEncoding("windows-1252");
+            var data = windows1252.GetBytes(text);
+
+            Process(text, data);
+        }
+        
+        [Test()]
         public void TestUTF8()
         {
             Process(Charsets.UTF8, "utf8");            
@@ -96,16 +108,30 @@ namespace Ude.Tests
             string[] files = Directory.GetFiles(path);
                 
             foreach (string file in files) {
-                using (FileStream fs = new FileStream(file, FileMode.Open)) {
-                    Console.WriteLine("Analysing {0}", file);                    
-                    detector.Feed(fs);
-                    detector.DataEnd();
-                    Console.WriteLine("{0} : {1} {2}", 
-                            file, detector.Charset, detector.Confidence);
-                    Assert.AreEqual(charset, detector.Charset);
-                    detector.Reset();
+                using (FileStream fs = new FileStream(file, FileMode.Open))
+                {
+                    Console.WriteLine("Analysing {0}", file);
+                    Process(charset, fs);
                 }
             }
+        }
+
+        private void Process(string charset, byte[] bytes)
+        {
+            using(var ms = new MemoryStream(bytes))
+            {
+                Process(charset, ms);
+            }
+        }
+
+        private void Process(string charset, Stream fs)
+        {
+            detector.Feed(fs);
+            detector.DataEnd();
+            Console.WriteLine("{0} : {1}",
+                    detector.Charset, detector.Confidence);
+            Assert.AreEqual(charset, detector.Charset);
+            detector.Reset();
         }
     }
 }
